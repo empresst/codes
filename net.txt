@@ -1,0 +1,912 @@
+Branch
+-----------------------------------------------
+no service password-encryption
+!
+hostname Branch
+!
+ip cef
+no ipv6 cef
+!
+!
+ip ssh version 1
+!
+!
+spanning-tree mode pvst
+!
+!
+interface FastEthernet0/0
+ ip address 192.168.40.129 255.255.255.224
+ duplex auto
+ speed auto
+!
+interface FastEthernet0/1
+ ip address 192.168.40.161 255.255.255.240
+ duplex auto
+ speed auto
+!
+interface Serial0/0/0
+ ip address 192.168.40.178 255.255.255.252
+ clock rate 64000
+!
+interface Serial0/0/1
+ no ip address
+ clock rate 2000000
+ shutdown
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router rip
+ version 2
+ passive-interface FastEthernet0/0
+ passive-interface FastEthernet0/1
+ network 192.168.40.0
+!
+ip classless
+!
+ip flow-export version 9
+!
+!
+line con 0
+ password cisco
+ login
+!
+line aux 0
+!
+line vty 0 4
+ password cisco
+ login
+line vty 5 15
+ password cisco
+ login
+!
+!
+ip route 192.168.40.0 255.255.255.0 Serial0/0/1 
+!
+end
+
+
+______________________________________________________
+
+HQ
+
+no service password-encryption
+!
+hostname HQ
+!
+!
+ip cef
+no ipv6 cef
+!
+!
+!
+ip ssh version 1
+!
+!
+spanning-tree mode pvst
+!
+!
+interface FastEthernet0/0
+ ip address 192.168.40.1 255.255.255.192
+ duplex auto
+ speed auto
+!
+interface FastEthernet0/1
+ ip address 192.168.40.65 255.255.255.192
+ duplex auto
+ speed auto
+!
+interface Serial0/0/0
+ ip address 192.168.40.177 255.255.255.252
+!
+interface Serial0/0/1
+ ip address 209.165.200.229 255.255.255.252
+ clock rate 64000
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router rip
+ version 2
+ passive-interface FastEthernet0/0
+ passive-interface FastEthernet0/1
+ network 192.168.40.0
+ default-information originate
+!
+ip classless
+ip route 0.0.0.0 0.0.0.0 Serial0/0/0 
+ip route 0.0.0.0 0.0.0.0 Serial0/0/1 
+!
+ip flow-export version 9
+!
+!
+line con 0
+ password cisco
+ login
+!
+line aux 0
+!
+line vty 0 4
+ password cisco
+ login
+line vty 5 15
+ password cisco
+ login
+!
+!
+!
+end
+_________________________________________________
+
+
+pc1
+192.168.40.158
+255.255.255.224
+192.168.40.129
+
+-------------------------------------------------------
+19
+R1
+
+en
+conf t
+line con 0
+password cisco
+login
+exit
+line vty 0
+password cisco
+login
+exit
+int fa0/0
+ip add 172.16.1.1 255.255.255.0
+no shutdown
+exit
+int s0/0/0
+ip add 172.16.3.1 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+int s0/0/1
+ip add 192.168.10.5 255.255.255.252
+clock rate 64000
+no shutdown
+exit
+router eigrp 1
+network 172.16.0.0
+no auto summary
+network 192.168.10.4 0.0.0.3
+exit
+int s0/0/0
+bandwidth info
+bandwidth 64
+exit
+exit
+copy run start
+
+
+
+------------------------------------------
+R2
+
+en
+conf t
+line con 0
+password cisco
+login
+exit
+line vty 0
+password cisco
+login
+exit
+int fa0/0
+ip add 172.16.2.1 255.255.255.0
+no shutdown
+exit
+int lo0
+ip add 10.1.1.1 255.255.255.252
+no shut
+exit
+int s0/0/0
+ip add 172.16.3.2 255.255.255.252
+clock rate 64000
+no shutdown
+bandwidth 64
+exit
+int s0/0/1
+ip add 192.168.10.9 255.255.255.252
+no shut
+bandwidth 64
+bandwidth 1024
+exit
+router eigrp 1
+no auto summary
+network 172.16.2.0
+network 192.168.10.8 0.0.0.3
+exit
+exit
+copy run start
+
+R3
+------------------------------
+en
+conf t
+line con 0
+password cisco
+login
+exit
+line vty 0
+password cisco
+login
+exit
+int fa0/0
+ip add 192.168.1.1 255.255.255.0
+no sh
+exit
+int s0/0/0
+ip add 192.168.10.6 255.255.255.252
+bandwidth 64
+no sh
+exit
+int s0/0/1
+ip add 192.168.10.10 255.255.255.252
+bandwidth 1024
+no sh
+exit
+autonomous system 1
+router eigrp 1
+network 192.168.1.0
+no auto-summary
+network 192.168.10.4 0.0.0.3
+network 192.168.10.8 0.0.0.3
+network 192.168.2.0
+network 192.168.3.0
+exit
+int loopback1
+ip add 192.168.2.1 255.255.255.0
+no sh
+ex
+int loopback2
+ip add 192.168.3.1 255.255.255.0
+no sh
+ex
+int s0/0/0
+ip summary-address eigrp 1 192.168.0.0 255.255.252.0
+int s0/0/1
+ip summary-address eigrp 1 192.168.0.0 255.255.252.0
+
+ex
+ex
+copy run start
+
+172.16.1.10
+255.255.255.0
+172.16.1.1
+172.16.2.1
+192.168.1.1
+
+---------------------------------------------
+10.1.0.0/16
+8000
+4000
+2000
+
+8000 8192 2^13
+32-13 = 19
+
+255.255.224.0
+10.1.0.0/19
+10.1.31.255/19
+
+2048 2^11
+10.1.0.0/21
+10.1.8.0/21
+10.1.16.0/21
+10.1.24.0/21
+
+
+4000 4096 2^12
+32-12 = 20
+255.255.240.0
+10.1.32.0/20
+10.1.47.255/20
+
+1024 2^10
+
+10.1.32.0/22
+10.1.36.0/22
+10.1.40.0/22
+10.1.44.0/22
+
+255.255.255.240
+
+
+2048
+32-11 
+32-11 = 21
+255.255.255.248
+10.1.48.0/21
+10.1.55.255/21
+
+512 2^9
+32-9 = 23
+255.255.254.0
+
+10.1.48.0
+10.1.50.0
+10.1.52.0
+10.1.54.0
+
+
+
+
+
+
+172.20.0.0/16
+500
+200
+100
+
+512 2^9
+32-9 = 23
+255.255.254.0
+172.20.0.0/23
+172.20.1.255/23
+
+128 2^7
+32-7 = 25
+255.255.255.128
+172.20.0.0
+172.20.0.128
+172.20.1.0
+172.20.1.128
+
+
+
+256 2^8
+32-8 = 24
+255.255.255.0
+172.20.2.0/24
+172.20.2.255
+
+
+128 2^7
+32-7 = 25
+255.255.255.128
+172.20.3.0/25
+172.20.3.127/25
+
+
+10.1.64.0/28
+
+10.1.64.0/30
+
+10.1.64.4/30
+
+10.1.64.8/30
+
+10.1.64.12/30
+
+
+
+172.20.4.0/28
+
+172.20.4.0/30
+172.20.4.4/30
+172.20.4.8/30
+172.20.4.12/30
+
+
+-------------
+r1
+
+en
+conf t
+int s0/0/0
+ip address 10.1.64.1 255.255.255.252
+no shut
+int s0/0/1
+ip address 10.1.64.5 255.255.255.252
+no shut
+clock rate 64000
+exit
+int s0/1/0
+ip address 10.1.64.9 255.255.255.252
+clock rate 64000
+no shut 
+exit
+router eigrp 1
+network 10.1.64.0
+passive-interface s0/1/1
+exit
+hostname R1
+ip route 0.0.0.0 0.0.0.0 s0/0/1
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+ip route 0.0.0.0 0.0.0.0 s0/1/0
+ip route 0.0.0.0 0.0.0.0 s0/1/1
+
+B1-R1
+----------
+en 
+conf t
+int fa0/0
+ip address 10.1.0.1 255.255.248.0
+no shut
+exit
+int fa0/1
+ip address 10.1.8.1 255.255.248.0
+no shut
+exit
+int fa1/0
+ip address 10.1.16.1 255.255.248.0
+no shut
+exit
+int fa1/1
+ip address 10.1.24.1 255.255.248.0 
+no shut
+exit
+in s0/0/0
+ip addr 10.1.64.2 255.255.255.252
+no shut
+ip hello-interval eigrp 1 1
+ip summary-address eigrp 1 10.1.0.0 255.255.224.0 5
+exit
+
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
+line console 0
+password cisco
+login
+exit
+router eigrp 1
+no auto-summary
+network 10.1.0.0
+passive-interface fa0/0
+passive-interface fa0/1
+passive-interface fa1/0
+passive-interface fa1/1
+exit
+line vty 0
+password cisco
+login
+exit
+
+
+B2-R1
+------------
+en 
+conf t
+line console 0
+password cisco
+login
+exit
+hostname B2-R1
+router eigrp 1
+no auto-summary
+network 10.1.0.0
+passive-interface fa0/0
+passive-interface fa0/1
+passive-interface fa1/0
+passive-interface fa1/1
+exit
+int fa0/0
+ip address 10.1.32.1 255.255.252.0
+no shut
+int fa0/1
+ip address 10.1.36.1 255.255.252.0
+no shut
+int fa1/0
+ip address 10.1.40.1 255.255.252.0
+no shut
+int fa1/1
+ip address 10.1.44.1 255.255.252.0
+no shut
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+in s0/0/0
+ip addr 10.1.64.6 255.255.255.252
+no shut
+ip hello-interval eigrp 1 1
+exit
+
+
+B3-R1
+----------------
+en 
+conf t
+hostname B3-R1
+router eigrp 1
+no auto-summary
+network 10.1.0.0
+passive-interface fa0/0
+passive-interface fa0/1
+passive-interface fa1/0
+passive-interface fa1/1
+exit
+int fa0/0
+ip address 10.1.48.1 255.255.254.0
+no shut
+int fa0/1
+ip address 10.1.50.1 255.255.254.0
+no shut
+int fa1/0
+ip address 10.1.52.1 255.255.254.0
+no shut
+int fa1/1
+ip address 10.1.54.1 255.255.254.0
+no shut
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+in s0/0/0
+ip addr 10.1.64.10 255.255.255.252
+no shut
+ip hello-interval eigrp 1 1
+exit
+
+R2
+-----------------------
+en
+conf t
+hostname R2
+int s0/0/0
+ip address 172.20.4.1 255.255.255.252
+clock rate 64000
+no shut
+int s0/0/1
+ip address 172.20.4.5 255.255.255.252
+no shut
+clock rate 64000
+exit
+int s0/1/0
+ip address 172.20.4.9 255.255.255.252
+clock rate 64000
+no shut 
+exit
+router eigrp 1
+network 172.20.4.0
+passive-interface s0/1/1
+exit
+hostname R1
+ip route 0.0.0.0 0.0.0.0 s0/0/1
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+ip route 0.0.0.0 0.0.0.0 s0/1/0
+ip route 0.0.0.0 0.0.0.0 s0/1/1
+router rip
+version 2
+passive-interface Serial0/1/1
+network 172.20.0.0
+default-information originate
+exit
+
+ip route 0.0.0.0 0.0.0.0 Serial0/1/1 
+
+B1-R2
+
+
+
+20
+-----------------------------------
+en 
+conf t
+
+hostname R1
+
+interface Loopback0
+ip address 10.1.1.1 255.255.255.255
+no sh
+ex
+
+interface Loopback1
+ip address 172.30.1.1 255.255.255.252
+no sh
+ex
+
+interface FastEthernet0/0
+ip address 172.16.1.17 255.255.255.240
+duplex auto
+speed auto
+no sh
+ex
+
+interface FastEthernet0/1
+no ip address
+duplex auto
+speed auto
+shutdown
+
+interface Serial0/0/0
+bandwidth 64
+ip address 192.168.10.1 255.255.255.252
+clock rate 64000
+no sh
+exi
+
+interface Serial0/0/1
+bandwidth 64
+ip address 192.168.10.5 255.255.255.252
+clock rate 2000000
+no sh
+ex
+
+
+line con 0
+password cisco
+login
+exit
+line vty 0 4
+password cisco
+login
+
+
+R2
+--------------
+
+hostname R2
+
+interface lo 0
+ip address 10.2.2.2 255.255.255.255
+no sh
+exit
+
+
+interface FastEthernet0/0
+ip address 10.10.10.1 255.255.255.0
+duplex auto
+speed auto
+
+interface FastEthernet0/1
+no ip address
+duplex auto
+speed auto
+shutdown
+
+interface Serial0/0/0
+bandwidth 64
+ip address 192.168.10.2 255.255.255.252
+clock rate 64000
+no shut
+
+interface Serial0/0/1
+bandwidth 64
+ip address 192.168.10.9 255.255.255.252
+clock rate 2000000
+no shut
+
+
+line con 0
+password cisco
+login
+exit
+line vty 0 4
+password cisco
+login
+
+172.20.0.0/16
+8000-8192 2^13 32-13 = 19
+172.20.0.0
+172.20.31.255
+
+4096 = pow 12
+32-12 = 20 
+172.20.32.0
+172.20.47.255
+
+255.255.224.0
+4000
+2000
+
+
+router ospf 1
+no auto summary
+passive-interface FastEthernet0/0
+network 172.20.32.0 0.0.15.255 area 0
+network 172.20.56.0 0.0.0.3 area 0
+network 172.20.56.8 0.0.0.3 area 0
+
+
+10.0.0.0/30
+32-6=26
+10.0.0.0/26
+10.0.0.63
+
+interface Serial0/0/0
+ip address 10.0.0.1 255.255.255.252
+clock rate 64000
+
+interface Serial0/0/1
+ip address 10.0.0.5 255.255.255.252
+clock rate 64000
+
+interface Serial0/1/0
+ip address 10.0.0.9 255.255.255.252
+clock rate 64000
+
+interface Serial0/1/1
+ip address 209.165.201.2 255.255.255.252
+
+interface Vlan1
+no ip address
+shutdown
+
+ip route 192.168.1.0 255.255.255.0 Serial0/0/0 
+ip route 172.16.0.0 255.255.0.0 Serial0/0/1 
+ip route 172.20.0.0 255.255.0.0 Serial0/1/0 
+ip route 0.0.0.0 0.0.0.0 Serial0/1/1 
+!
+ip flow-export version 9
+!
+!
+!
+!
+!
+!
+!
+!
+line con 0
+ password cisco
+ login
+!
+line aux 0
+!
+line vty 0 4
+ password cisco
+ login
+line vty 5 15
+ password cisco
+ login
+!
+!
+!
+end
+
+interface FastEthernet0/0
+ip address 192.168.0.129 255.255.255.224
+no shut
+duplex auto
+speed auto
+
+interface FastEthernet0/1
+ip address 192.168.0.161 255.255.255.224
+no shut
+duplex auto
+speed auto
+
+
+vlan 10
+vlan 30
+int f0/11
+switchport mode access
+switchport access vlan 10
+int f0/6
+swithport mode access
+switchport access vlan 30
+
+
+int g0/1
+switchport mode trunk
+
+
+
+
+int g0/0
+R1(config-if)#no shut
+
+s1
+vlan 10
+vlan 30
+int f0/11
+switchport mode access
+switchport access vlan 10
+
+int f0/6
+switchport mode access
+switchport access vlan 30
+
+int g0/1
+switchport mode trunk
+
+
+R1
+-----------------------------
+int g0/0.10
+encapsulation dot1q 10 
+ip address 172.17.10.1 255.255.255.0
+no shutdo
+interface g0/0.30
+encapsulation dot1q 30
+ip address 172.17.30.1 255.255.255.0
+no sh
+
+int g0/0
+no shut
+
+
+
+s1
+---------------------------
+vlan 10
+vlan 30
+int f0/11
+switchport mode access
+switchport access vlan 10
+
+int f0/6
+switchport mode access
+switchport access vlan 30
+
+int g0/1
+switchport mode trunk
+
+s1
+vlan 10
+vlan 30
+int f0/11
+switchport mode access
+switchport access vlan 10
+
+int f0/6
+switchport mode access
+switchport access vlan 30
+
+int g0/1
+switchport mode trunk
+
+int g0/0.10
+encapsulation dot1q 10 
+ip address 172.31.10.1 255.255.255.0
+exi
+------------------------------------------
+vlan2
+R1
+--------------
+int g0/0.10
+encapsulation dot1q 10 
+ip address 172.31.10.1 255.255.255.0
+exi
+
+int g0/0.20
+encapsulation dot1q 20 
+ip address 172.31.20.1 255.255.255.0
+exi
+int g0/0.30
+encapsulation dot1q 30 
+ip address 172.31.30.1 255.255.255.0
+exi
+int g0/0.88
+encapsulation dot1q 88 
+ip address 172.31.88.1 255.255.255.0
+exi
+int g0/0.99
+encapsulation dot1q 99 nat 
+ip address 172.31.99.1 255.255.255.0
+exi
+int g0/0
+no shut
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
+
+
+S1
+-----------
+int g0/1
+switchport mode trunk
+
+switchport trunk native vlan 99
+ex
+copy running-config-startup-co
+
+
+HQ
+-------------
+ip route 172.31.10.0 255.255.255.0 serial 0/0/0
+ip route 172.31.20.0 255.255.255.0 serial 0/0/0
+ip route 172.31.30.0 255.255.255.0 serial 0/0/0
+ip route 172.31.88.0 255.255.255.0 serial 0/0/0
+ip route 172.31.10.0 255.255.255.0 serial 0/0/0
+ip route 209.165.200.0 255.255.255.224 serial 0/1/0
+ip route 209.165.200.0 255.255.255.224 serial 0/1/1 10
+
+
+R1
+ip route 0.0.0.0 0.0.0.0 s0/0/0
+
